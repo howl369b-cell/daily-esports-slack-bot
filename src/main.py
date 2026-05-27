@@ -25,6 +25,8 @@ VALORANT_LEAGUES = {
     "VCT Americas": ["VCT 2026: Americas", "Americas Qualifier"],
 }
 
+MAX_MATCHES_PER_VALORANT_LEAGUE = 6
+
 
 def riot_get(path, params=None):
     response = requests.get(
@@ -183,6 +185,10 @@ def parse_vlr_match(item, include_score):
 
     left = clean_text(team_els[0].get_text(" "))
     right = clean_text(team_els[1].get_text(" "))
+
+    if left.upper() == "TBD" and right.upper() == "TBD":
+        return None
+
     time_text = clean_text(time_el.get_text(" ")) if time_el else ""
 
     if include_score and len(score_els) >= 2:
@@ -195,34 +201,73 @@ def parse_vlr_match(item, include_score):
     return league_name, line
 
 
+def is_vlr_date_label(element):
+    classes = element.get("class", [])
+    text = clean_text(element.get_text(" "))
+    return "wf-label" in classes and "mod-large" in classes and "," in text
+
+
+def target_vlr_items(soup, target_word):
+    items = []
+    in_target_section = False
+
+    for element in soup.select(".wf-label.mod-large, a.match-item"):
+        if is_vlr_date_label(element):
+            label = clean_text(element.get_text(" ")).lower()
+            if target_word.lower() in label:
+                in_target_section = True
+            elif in_target_section:
+                break
+            else:
+                in_target_section = False
+            continue
+
+        if in_target_section and "match-item" in element.get("class", []):
+            items.append(element)
+
+    return items
+
+
+def add_unique_match(data, league_name, line):
+    if line not in data[league_name]:
+        data[league_name].append(line)
+
+
+def trim_valorant_data(data):
+    return {
+        league_name: matches[:MAX_MATCHES_PER_VALORANT_LEAGUE]
+        for league_name, matches in data.items()
+    }
+
+
 def collect_valorant_data():
     results = {league_name: [] for league_name in VALORANT_LEAGUES}
     today_matches = {league_name: [] for league_name in VALORANT_LEAGUES}
     t1_matches = []
 
     results_soup = vlr_get("/matches/results")
-    for item in results_soup.select("a.match-item"):
+    for item in target_vlr_items(results_soup, "Yesterday"):
         parsed = parse_vlr_match(item, include_score=True)
         if not parsed:
             continue
 
         league_name, line = parsed
-        results[league_name].append(line)
+        add_unique_match(results, league_name, line)
         if "T1" in line.upper():
             t1_matches.append(f"VALORANT {league_name}: {line}")
 
     schedule_soup = vlr_get("/matches")
-    for item in schedule_soup.select("a.match-item"):
+    for item in target_vlr_items(schedule_soup, "Today"):
         parsed = parse_vlr_match(item, include_score=False)
         if not parsed:
             continue
 
         league_name, line = parsed
-        today_matches[league_name].append(line)
+        add_unique_match(today_matches, league_name, line)
         if "T1" in line.upper():
             t1_matches.append(f"VALORANT {league_name}: {line}")
 
-    return results, today_matches, t1_matches
+    return trim_valorant_data(results), trim_valorant_data(today_matches), t1_matches
 
 
 def section_lines_by_league(data):
