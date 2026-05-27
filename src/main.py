@@ -167,7 +167,29 @@ def detect_valorant_league(event_name):
         if any(alias.lower() in lowered for alias in aliases):
             return league_name
     return None
+def vlr_match_kst_time(item):
+    href = item.get("href")
+    if not href:
+        return ""
 
+    try:
+        detail_soup = vlr_get(href)
+    except requests.RequestException:
+        return ""
+
+    time_el = detail_soup.select_one("[data-utc-ts]")
+    if not time_el:
+        return ""
+
+    raw_ts = time_el.get("data-utc-ts")
+    if not raw_ts:
+        return ""
+
+    timestamp = int(raw_ts)
+    if timestamp > 10_000_000_000:
+        timestamp = timestamp / 1000
+
+    return datetime.fromtimestamp(timestamp, tz=ZoneInfo("UTC")).astimezone(KST).strftime("%H:%M")
 
 def parse_vlr_match(item, include_score):
     time_el = item.select_one(".match-item-time")
@@ -189,7 +211,9 @@ def parse_vlr_match(item, include_score):
     if left.upper() == "TBD" and right.upper() == "TBD":
         return None
 
-    time_text = clean_text(time_el.get_text(" ")) if time_el else ""
+    time_text = vlr_match_kst_time(item)
+if not time_text and time_el:
+    time_text = clean_text(time_el.get_text(" "))
 
     if include_score and len(score_els) >= 2:
         left_score = clean_text(score_els[0].get_text(" "))
