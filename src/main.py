@@ -188,3 +188,10 @@ def send_to_slack(text):
     response = requests.post(
         SLACK_WEBHOOK_URL,
         json={"text": text},
+        timeout=10,
+    )
+    response.raise_for_status()
+
+
+if __name__ == "__main__":
+    send_to_slack(build_message())
