@@ -346,7 +346,7 @@ LoL
 VALORANT
 {section_lines_by_league(valorant_results)}
 
-📅 Today Matches
+📅 Today Matches (KST)
 
 LoL
 {section_lines_by_league(lol_today_matches)}
