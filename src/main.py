@@ -185,6 +185,19 @@ def vlr_match_kst_time(item):
     if not raw_ts:
         return ""
 
+    try:
+        if raw_ts.isdigit():
+            timestamp = int(raw_ts)
+            if timestamp > 10_000_000_000:
+                timestamp = timestamp / 1000
+            match_time = datetime.fromtimestamp(timestamp, tz=ZoneInfo("UTC"))
+        else:
+            match_time = datetime.strptime(raw_ts, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ZoneInfo("UTC"))
+
+        return match_time.astimezone(KST).strftime("%H:%M")
+    except ValueError:
+        return ""
+
     timestamp = int(raw_ts)
     if timestamp > 10_000_000_000:
         timestamp = timestamp / 1000
