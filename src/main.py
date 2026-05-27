@@ -244,14 +244,15 @@ def trim_valorant_data(data):
 
 
 def collect_valorant_data():
+    today = datetime.now(KST).date()
+    yesterday = today - timedelta(days=1)
+
     results = {league_name: [] for league_name in VALORANT_LEAGUES}
     today_matches = {league_name: [] for league_name in VALORANT_LEAGUES}
     t1_matches = []
 
     results_soup = vlr_get("/matches/results")
-yesterday = datetime.now(KST).date() - timedelta(days=1)
-
-for item in target_vlr_items(results_soup, yesterday):
+    for item in target_vlr_items(results_soup, yesterday):
         parsed = parse_vlr_match(item, include_score=True)
         if not parsed:
             continue
@@ -262,9 +263,7 @@ for item in target_vlr_items(results_soup, yesterday):
             t1_matches.append(f"VALORANT {league_name}: {line}")
 
     schedule_soup = vlr_get("/matches")
-today = datetime.now(KST).date()
-
-for item in target_vlr_items(schedule_soup, today):
+    for item in target_vlr_items(schedule_soup, today):
         parsed = parse_vlr_match(item, include_score=False)
         if not parsed:
             continue
