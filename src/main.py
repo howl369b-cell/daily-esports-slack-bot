@@ -206,15 +206,18 @@ def is_vlr_date_label(element):
     text = clean_text(element.get_text(" "))
     return "wf-label" in classes and "mod-large" in classes and "," in text
 
+def vlr_date_label(date):
+    return f"{date.strftime('%a, %b')} {date.day}, {date.year}"
 
-def target_vlr_items(soup, target_word):
+def target_vlr_items(soup, target_date):
     items = []
     in_target_section = False
+    target_label = vlr_date_label(target_date).lower()
 
     for element in soup.select(".wf-label.mod-large, a.match-item"):
         if is_vlr_date_label(element):
             label = clean_text(element.get_text(" ")).lower()
-            if target_word.lower() in label:
+            if label.startswith(target_label):
                 in_target_section = True
             elif in_target_section:
                 break
@@ -246,7 +249,9 @@ def collect_valorant_data():
     t1_matches = []
 
     results_soup = vlr_get("/matches/results")
-    for item in target_vlr_items(results_soup, "Yesterday"):
+yesterday = datetime.now(KST).date() - timedelta(days=1)
+
+for item in target_vlr_items(results_soup, yesterday):
         parsed = parse_vlr_match(item, include_score=True)
         if not parsed:
             continue
@@ -257,7 +262,9 @@ def collect_valorant_data():
             t1_matches.append(f"VALORANT {league_name}: {line}")
 
     schedule_soup = vlr_get("/matches")
-    for item in target_vlr_items(schedule_soup, "Today"):
+today = datetime.now(KST).date()
+
+for item in target_vlr_items(schedule_soup, today):
         parsed = parse_vlr_match(item, include_score=False)
         if not parsed:
             continue
