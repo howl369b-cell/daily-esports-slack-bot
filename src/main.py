@@ -212,8 +212,8 @@ def parse_vlr_match(item, include_score):
         return None
 
     time_text = vlr_match_kst_time(item)
-if not time_text and time_el:
-    time_text = clean_text(time_el.get_text(" "))
+    if not time_text and time_el:
+        time_text = clean_text(time_el.get_text(" "))
 
     if include_score and len(score_els) >= 2:
         left_score = clean_text(score_els[0].get_text(" "))
