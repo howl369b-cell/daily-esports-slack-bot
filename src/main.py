@@ -19,10 +19,11 @@ LOL_LEAGUES = {
 }
 
 VALORANT_LEAGUES = {
-    "VCT Pacific": ["VCT 2026: Pacific", "Pacific Qualifier"],
+    "EWC": ["Esports World Cup"],
+    "VCT Pacific": ["VCT 2026: Pacific"],
     "VCT China": ["VCT 2026: China", "China Evolution"],
-    "VCT EMEA": ["VCT 2026: EMEA", "EMEA Qualifier"],
-    "VCT Americas": ["VCT 2026: Americas", "Americas Qualifier"],
+    "VCT EMEA": ["VCT 2026: EMEA"],
+    "VCT Americas": ["VCT 2026: Americas"],
 }
 
 MAX_MATCHES_PER_VALORANT_LEAGUE = 6
